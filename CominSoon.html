@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wise Cipher – Coming Soon</title>
+  <style>
+    /* Reset & Base */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family:'Helvetica Neue', Arial, sans-serif; background:#000; color:#eee; overflow-x:hidden; }
+
+    /* Pong Background */
+    #pong { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; background:#000; }
+
+    /* Hero Section */
+    #hero { position:relative; z-index:1; padding:4rem 20px; text-align:center; background:rgba(0,0,0,0.6); }
+    #hero .logo-top { max-width:180px; margin:0 auto 1.5rem; display:block; }
+    /* INSERT LOGO IMAGE HERE above */
+    #hero .coming-soon { font-size:1.2rem; color:#0f0; margin-bottom:0.5rem; letter-spacing:0.2rem; text-transform:uppercase; }
+    #hero h1 { font-size:3rem; color:#0f0; letter-spacing:0.2rem; margin-bottom:0.5rem; }
+    #hero p.subtitle { font-size:1.2rem; color:#aaa; margin-bottom:1.5rem; }
+    #hero form { display:flex; max-width:500px; margin:0 auto; width:100%; }
+    #hero input[type='email'] { flex:1; padding:1rem; border:1px solid #333; background:#111; color:#fff; font-size:1rem; border-right:0; border-radius:4px 0 0 4px; }
+    #hero input::placeholder { color:#555; }
+    #hero button { padding:1rem 1.2rem; border:1px solid #0f0; background:#0f0; color:#000; font-weight:bold; cursor:pointer; border-radius:0 4px 4px 0; font-size:1rem; }
+    #hero button:hover { opacity:0.9; }
+    #hero #thank { display:none; margin-top:1rem; color:#0f0; font-size:1rem; }
+
+    /* About Section */
+    #about { position:relative; z-index:1; padding:4rem 20px; background:rgba(0,0,0,0.6); }
+    #about h2 { text-align:center; font-size:2rem; color:#0f0; margin-bottom:2rem; }
+    .features {
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:2rem;
+      max-width:1000px;
+      margin:0 auto;
+    }
+    @media (max-width:600px) {
+      .features { grid-template-columns:1fr; }
+    }
+    .feature-card {
+      background:transparent;
+      border:1px solid rgba(0,255,0,0.6);
+      border-radius:8px;
+      padding:1.5rem;
+      height:220px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      transition:transform .3s, box-shadow .3s;
+    }
+    .feature-card:hover {
+      transform:translateY(-5px);
+      box-shadow:0 0 15px rgba(0,255,0,0.4);
+    }
+    .feature-card .num { font-size:1.5rem; color:#0f0; font-weight:bold; margin-bottom:0.5rem; }
+    .feature-card h3 { font-size:1.2rem; margin-bottom:0.8rem; color:#fff; }
+    .feature-card p { font-size:1rem; line-height:1.5; color:#ccc; }
+
+    /* Footer */
+    footer { text-align:center; padding:2rem 0; font-size:0.9rem; color:#555; position:relative; z-index:1; }
+  </style>
+</head>
+<body>
+  <!-- Pong Background -->
+  <canvas id="pong"></canvas>
+
+  <!-- Hero Section -->
+  <section id="hero">
+    <!-- INSERT LOGO IMAGE HERE -->
+
+    <div class="coming-soon">Coming Soon</div>
+    <h1>Wise Cipher</h1>
+    <p class="subtitle">AI-Powered Semantic Decryption Engine</p>
+
+    <form id="notify-form">
+      <input type="email" id="email" placeholder="Enter your email" required>
+      <button type="submit">Notify Me</button>
+    </form>
+    <div id="thank">Thanks! You’ll be notified when we launch.</div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about">
+    <h2>Unlock Smarter Insights</h2>
+    <div class="features">
+      <div class="feature-card">
+        <h3>GPT-4™ Backbone + Fine-Tuning</h3>
+        <p>Transformer models specialized on legal, technical & financial corpora for rock-solid accuracy.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Retrieval-Augmented Generation</h3>
+        <p>Lightning-fast vector search over document embeddings, processing multi-hundred-page contracts in milliseconds.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Structured Insight Dashboard</h3>
+        <p>Auto-extracted obligations, deadlines & risk scores presented in a unified timeline and API.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Enterprise-Grade Security</h3>
+        <p>End-to-end encryption, zero-retention processing, audit logs & SSO integrations out of the box.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scripts -->
+  <script>
+    // Pong Simulation
+    const canvas = document.getElementById('pong');
+    const ctx = canvas.getContext('2d');
+    let W, H, paddle, ball;
+    function resize() { W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; paddle={w:W*0.15,h:10,x:(W*0.5)-(W*0.15)/2,y:H-30}; ball={x:W/2,y:H/2,r:8,dx:4*(Math.random()<0.5?-1:1),dy:4}; }
+    window.addEventListener('resize',resize); resize();
+    function drawPaddle(){ctx.fillStyle='#0f0';ctx.fillRect(paddle.x,paddle.y,paddle.w,paddle.h);}    
+    function drawBall(){ctx.fillStyle='#0f0';ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();}
+    function update(){ball.x+=ball.dx; ball.y+=ball.dy; if(ball.x-ball.r<0||ball.x+ball.r>W)ball.dx*=-1; if(ball.y-ball.r<0)ball.dy*=-1; if(ball.y+ball.r>paddle.y&&ball.x>paddle.x&&ball.x<paddle.x+paddle.w){ball.dy*=-1;ball.y=paddle.y-ball.r;} if(ball.y-ball.r>H){ball.x=W/2;ball.y=H/2;ball.dx=4*(Math.random()<0.5?-1:1);ball.dy=4;} const tx=ball.x-paddle.w/2;paddle.x+=(tx-paddle.x)*0.1;paddle.x=Math.max(0,Math.min(W-paddle.w,paddle.x));}
+    function loop(){ctx.clearRect(0,0,W,H);drawPaddle();drawBall();update();requestAnimationFrame(loop);} loop();
+    // Notify Form
+    document.getElementById('notify-form').addEventListener('submit',function(e){e.preventDefault();const email=document.getElementById('email').value.trim();if(!email)return;this.style.display='none';document.getElementById('thank').style.display='block';});
+  </script>
+
+  <footer>&copy; 2025 Wise Cipher. All rights reserved.</footer>
+</body>
+</html>
