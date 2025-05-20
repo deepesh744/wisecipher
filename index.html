@@ -113,44 +113,122 @@
   <script>
     // Pong Simulation
     const canvas = document.getElementById('pong');
-    const ctx = canvas.getContext('2d');
+    const ctx    = canvas.getContext('2d');
     let W, H, paddle, ball;
-    function resize() { W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; paddle={w:W*0.15,h:10,x:(W*0.5)-(W*0.15)/2,y:H-30}; ball={x:W/2,y:H/2,r:8,dx:4*(Math.random()<0.5?-1:1),dy:4}; }
-    window.addEventListener('resize',resize); resize();
-    function drawPaddle(){ctx.fillStyle='#0f0';ctx.fillRect(paddle.x,paddle.y,paddle.w,paddle.h);}    
-    function drawBall(){ctx.fillStyle='#0f0';ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();}
-    function update(){ball.x+=ball.dx; ball.y+=ball.dy; if(ball.x-ball.r<0||ball.x+ball.r>W)ball.dx*=-1; if(ball.y-ball.r<0)ball.dy*=-1; if(ball.y+ball.r>paddle.y&&ball.x>paddle.x&&ball.x<paddle.x+paddle.w){ball.dy*=-1;ball.y=paddle.y-ball.r;} if(ball.y-ball.r>H){ball.x=W/2;ball.y=H/2;ball.dx=4*(Math.random()<0.5?-1:1);ball.dy=4;} const tx=ball.x-paddle.w/2;paddle.x+=(tx-paddle.x)*0.1;paddle.x=Math.max(0,Math.min(W-paddle.w,paddle.x));}
-    function loop(){ctx.clearRect(0,0,W,H);drawPaddle();drawBall();update();requestAnimationFrame(loop);} loop();
-    // Notify Form
+  
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      const paddleHeight = 10;
+      paddle = {
+        w: W * 0.15,
+        h: paddleHeight,
+        x: (W * 0.5) - (W * 0.15) / 2,
+        // initial y; we'll keep it updated in update()
+        y: H - paddleHeight - 20 
+      };
+      ball = {
+        x: W / 2,
+        y: H / 2,
+        r: 8,
+        dx: 4 * (Math.random() < 0.5 ? -1 : 1),
+        dy: 4
+      };
+    }
+  
+    // Handle all viewport resizes (including mobile chrome UI)
+    window.addEventListener('resize',  resize);
+    window.addEventListener('orientationchange', resize);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', resize);
+    }
+  
+    resize();
+  
+    function drawPaddle(){
+      ctx.fillStyle = '#0f0';
+      ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+    }
+  
+    function drawBall(){
+      ctx.fillStyle = '#0f0';
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  
+    function update(){
+      // keep paddle glued to the bottom every frame
+      paddle.y = H - paddle.h - 20;
+  
+      // move ball
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+  
+      // wall bounces
+      if (ball.x - ball.r < 0 || ball.x + ball.r > W) ball.dx *= -1;
+      if (ball.y - ball.r < 0) ball.dy *= -1;
+  
+      // paddle collision
+      if (
+        ball.y + ball.r > paddle.y &&
+        ball.x > paddle.x &&
+        ball.x < paddle.x + paddle.w
+      ) {
+        ball.dy *= -1;
+        ball.y = paddle.y - ball.r;
+      }
+  
+      // reset if missed
+      if (ball.y - ball.r > H) {
+        ball.x  = W / 2;
+        ball.y  = H / 2;
+        ball.dx = 4 * (Math.random() < 0.5 ? -1 : 1);
+        ball.dy = 4;
+      }
+  
+      // auto-track paddle
+      const targetX = ball.x - paddle.w / 2;
+      paddle.x += (targetX - paddle.x) * 0.1;
+      paddle.x = Math.max(0, Math.min(W - paddle.w, paddle.x));
+    }
+  
+    function loop(){
+      ctx.clearRect(0, 0, W, H);
+      drawPaddle();
+      drawBall();
+      update();
+      requestAnimationFrame(loop);
+    }
+    loop();
+  
     // Formspree AJAX submit + thank-you message
-    document.getElementById('notify-form')
-      .addEventListener('submit', function(e) {
-        e.preventDefault();
-        const form = this;
-        const data = new FormData(form);
-
-        fetch(form.action, {
-          method: form.method,
-          body: data,
-          headers: { 'Accept': 'application/json' }
-        })
-        .then(response => {
-          if (response.ok) {
-            form.reset();
-            form.style.display = 'none';
-            document.getElementById('thank').style.display = 'block';
-          } else {
-            response.json().then(json => {
-              alert((json.errors || []).map(err => err.message).join(", ") ||
-                    "Oops! There was a problem submitting your form.");
-            });
-          }
-        })
-        .catch(() => {
-          alert("Oops! There was a problem submitting your form.");
-        });
+    document.getElementById('notify-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const form = this;
+      const data = new FormData(form);
+      fetch(form.action, {
+        method:  form.method,
+        body:    data,
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(response => {
+        if (response.ok) {
+          form.reset();
+          form.style.display = 'none';
+          document.getElementById('thank').style.display = 'block';
+        } else {
+          response.json().then(json => {
+            alert((json.errors || []).map(err => err.message).join(", ") ||
+                  "Oops! There was a problem submitting your form.");
+          });
+        }
+      })
+      .catch(() => {
+        alert("Oops! There was a problem submitting your form.");
       });
-  </script>
+    });
+  </script>  
 
   <footer>&copy; 2025 Wise Cipher. All rights reserved.</footer>
 </body>
