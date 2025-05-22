@@ -11,7 +11,7 @@
     "dependencies": {
         "@supabase/supabase-js": "^2.40.0",
         "crypto-js": "^4.2.0",
-        "formidable-serverless": "^1.1.1",
+        "formidable": "^3.5.4",
         "mammoth": "^1.7.0",
         "next": "latest",
         "next-plausible": "^3.12.4",
@@ -24,7 +24,9 @@
     },
     "devDependencies": {
         "@types/crypto-js": "^4.2.2",
-        "@types/node": "^20.0.0",
+        "@types/formidable": "^3.4.5",
+        "@types/node": "^20.17.50",
+        "@types/pdfjs-dist": "^2.10.377",
         "@types/react": "^18.0.0",
         "@types/react-dropzone": "^4.2.2",
         "autoprefixer": "^10.4.14",
