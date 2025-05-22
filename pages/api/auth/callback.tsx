@@ -1,3 +1,4 @@
+// pages/auth/callback.tsx
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../../lib/supabase';
@@ -7,7 +8,16 @@ export default function AuthCallback() {
   const router = useRouter();
 
   useEffect(() => {
-    const { access_token, refresh_token, error_description } = router.query;
+    // Extract auth tokens or error from the URL query
+    const {
+      access_token,
+      refresh_token,
+      error_description,
+    } = router.query as {
+      access_token?: string;
+      refresh_token?: string;
+      error_description?: string;
+    };
 
     if (error_description) {
       console.error('Auth error:', error_description);
@@ -16,22 +26,23 @@ export default function AuthCallback() {
     }
 
     if (access_token && refresh_token) {
-      // Finalize the Supabase session
-      void supabase.auth
-        .setSession({
-          access_token: String(access_token),
-          refresh_token: String(refresh_token),
-        })
-        .then(({ error }) => {
-          if (error) {
-            console.error('Session error:', error.message);
+      // Set the session manually using the v2 SDK
+      supabase.auth
+        .setSession({ access_token, refresh_token })
+        .then((result) => {
+          if (result.error) {
+            console.error('Session error:', result.error.message);
             void router.replace('/login');
           } else {
             void router.replace('/dashboard');
           }
+        })
+        .catch((e: Error) => {
+          console.error('Session exception:', e.message);
+          void router.replace('/login');
         });
     } else {
-      // No tokens → send to login
+      // No tokens found; redirect to login
       void router.replace('/login');
     }
   }, [router]);
