@@ -38,7 +38,7 @@ export default function Navbar() {
         {user ? (
           <>
             <Link href="/dashboard" className="text-gray-700 hover:underline">
-              Dashboard
+              Dashboardss
             </Link>
             <button
               onClick={handleLogout}
