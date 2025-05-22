@@ -36,7 +36,7 @@ export default function UploadDropzone({ onFile, disabled = false }: Props) {
         disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
       ].join(' ')}
     >
-      <input {...getInputProps()} />
+      <input {...getInputProps()} style={{ display: 'none' }} />
       {disabled
         ? 'Uploading… please wait'
         : 'Drag & drop your PDF, DOCX, or TXT file here, or click to select'}
