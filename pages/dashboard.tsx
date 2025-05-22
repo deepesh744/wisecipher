@@ -59,10 +59,7 @@ export default function Dashboard() {
   async function handleFile(file: File) {
     setUploading(true);
   
-    // 1) get the logged-in user's session
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       console.error('No active session—redirecting to login');
       router.replace('/login');
@@ -73,7 +70,6 @@ export default function Dashboard() {
     const formData = new FormData();
     formData.append('file', file);
   
-    // 3) send the JWT in the Authorization header
     const res = await fetch('/api/upload', {
       method: 'POST',
       body: formData,

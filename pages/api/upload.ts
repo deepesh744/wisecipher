@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import formidable, { Fields, File as FormidableFile, Files } from 'formidable'
 import { supabase } from '../../lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import { generateKey, encryptText } from '../../lib/encryption'
 import { extractTextFromDocx } from '../../lib/textExtractors'
 import pdfjsLib from 'pdfjs-dist/legacy/build/pdf'
@@ -11,14 +12,20 @@ export const config = { api: { bodyParser: false } };
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  // STEP A: Verify the user is logged in, get user.id from session
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (userError || !user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
+  // ── STEP A: Pull the JWT from the Authorization header ─────────────
+  const authHeader = req.headers.authorization || ''
+  const token = authHeader.replace(/^Bearer\s*/, '')
+  if (!token) return res.status(401).json({ error: 'Missing auth token' })
+
+  // Verify that token and get the user
+  const { data: { user }, error: userError } = await supabase.auth.getUser(token)
+  if (userError || !user) return res.status(401).json({ error: 'Not authenticated' })
+
+  // ── Create a server‐side (service‐role) client for the insert ────────
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!   // set in your .env
+  )
 
   // STEP B: Parse the incoming multipart form
   const form = new formidable.IncomingForm();
@@ -54,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const key = generateKey();
     const encryptedText = encryptText(text, key);
 
-    const { error: dbError } = await supabase
+    const { error: dbError } = await supabaseAdmin
       .from('documents')
       .insert([
         {
