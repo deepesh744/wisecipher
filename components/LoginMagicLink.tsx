@@ -10,7 +10,12 @@ export default function LoginMagicLink() {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({ email });
+    const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`;
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: redirectTo }
+    });
     setSent(true);
     setLoading(false);
   };
