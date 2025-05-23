@@ -1,29 +1,25 @@
+// lib/textExtractors.ts
 import mammoth from "mammoth";
 import { Buffer } from "buffer";
 
 /**
- * Extract raw text from a DOCX file using Mammoth.
- * Accepts either a Node.js Buffer or an ArrayBuffer.
+ * Extract raw text from a DOCX buffer using Mammoth.
+ * Uses the `buffer` option in Node.js for easier parsing.
  */
 export async function extractTextFromDocx(
   input: Buffer | ArrayBuffer
 ): Promise<string> {
-  let arrayBuffer: ArrayBuffer;
+  // In Node, mammoth.extractRawText expects a Buffer
+  let nodeBuffer: Buffer;
 
   if (Buffer.isBuffer(input)) {
-    // Convert Node.js Buffer to a pure ArrayBuffer slice for Mammoth
-    const buf = input as Buffer;
-    const fullArrayBuffer = buf.buffer as ArrayBuffer;
-    arrayBuffer = fullArrayBuffer.slice(
-      buf.byteOffset,
-      buf.byteOffset + buf.byteLength
-    );
+    nodeBuffer = input as Buffer;
   } else {
-    // Already an ArrayBuffer, use directly
-    arrayBuffer = input;
+    // Convert ArrayBuffer to Buffer if ever used in-browser
+    nodeBuffer = Buffer.from(input as ArrayBuffer);
   }
 
-  // Let Mammoth extract the raw text
-  const { value } = await mammoth.extractRawText({ arrayBuffer });
+  // Directly pass the Node.js Buffer to Mammoth
+  const { value } = await mammoth.extractRawText({ buffer: nodeBuffer });
   return value;
 }
