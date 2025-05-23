@@ -7,10 +7,6 @@ import { supabase } from '../../lib/supabase'
 import { generateKey, encryptText } from '../../lib/encryption'
 import { extractTextFromDocx } from '../../lib/textExtractors'
 
-const pdfjsModule = require('pdfjs-dist/legacy/build/pdf.node')
-
-const pdfjsLib = pdfjsModule?.default ?? pdfjsModule;
-
 export const config = { api: { bodyParser: false } }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -65,6 +61,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'No file uploaded' })
   }
   console.log('📄 Received file:', file.originalFilename, file.mimetype)
+
+  const pdfjsModule = require('pdfjs-dist/legacy/build/pdf')
+  const pdfjsLib = pdfjsModule.default ?? pdfjsModule
+
+  // Disable workers (so it never tries to import pdf.worker)
+  if (pdfjsLib.GlobalWorkerOptions) {
+    pdfjsLib.GlobalWorkerOptions.disableWorker = true
+  }
 
   // 4) Extract text
   const buffer = fs.readFileSync(file.filepath)
