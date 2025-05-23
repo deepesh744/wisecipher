@@ -15,6 +15,7 @@
         "mammoth": "^1.7.0",
         "next": "latest",
         "next-plausible": "^3.12.4",
+        "pdf-parse": "^1.1.1",
         "pdfjs-dist": "^4.8.69",
         "plausible-tracker": "^0.3.9",
         "react": "latest",

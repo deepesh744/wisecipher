@@ -6,6 +6,7 @@ import fs from 'fs'
 import { supabase } from '../../lib/supabase'
 import { generateKey, encryptText } from '../../lib/encryption'
 import { extractTextFromDocx } from '../../lib/textExtractors'
+import pdfParse from 'pdf-parse'
 
 export const config = { api: { bodyParser: false } }
 
@@ -62,36 +63,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   console.log('📄 Received file:', file.originalFilename, file.mimetype)
 
-  const pdfjsModule = require('pdfjs-dist/legacy/build/pdf')
-  const pdfjsLib = pdfjsModule.default ?? pdfjsModule
-
-  // Disable workers (so it never tries to import pdf.worker)
-  if (pdfjsLib.GlobalWorkerOptions) {
-    pdfjsLib.GlobalWorkerOptions.disableWorker = true
-  }
-
   // 4) Extract text
   const buffer = fs.readFileSync(file.filepath)
-
-  // PDF.js requires a Uint8Array, not a Buffer
-  const uint8Array = new Uint8Array(
-    buffer.buffer,
-    buffer.byteOffset,
-    buffer.byteLength
-  )
-
   let text = ''
+
   if (file.mimetype === 'application/pdf') {
-    const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i)
-      const content = await page.getTextContent()
-      text += content.items.map((item: any) => item.str).join(' ')
+    try {
+      const data = await pdfParse(buffer)
+      text = data.text
+    } catch (e: any) {
+      console.error('❌ PDF parse error', e)
+      return res.status(500).json({ error: 'Failed to parse PDF' })
     }
-  } else if (
-    file.mimetype === 
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  ) {
+  } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
     text = await extractTextFromDocx(buffer)
   } else if (file.mimetype === 'text/plain') {
     text = buffer.toString()
@@ -99,6 +83,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('❌ Unsupported file type:', file.mimetype)
     return res.status(400).json({ error: 'Unsupported file type' })
   }
+
   console.log('📝 Extracted text length:', text.length)
 
   // 5) Encrypt
