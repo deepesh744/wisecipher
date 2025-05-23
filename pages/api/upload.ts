@@ -8,7 +8,7 @@ import { generateKey, encryptText } from '../../lib/encryption'
 import { extractTextFromDocx } from '../../lib/textExtractors'
 
 const pdfjsModule = require('pdfjs-dist/legacy/build/pdf')
-const pdfjsLib = pdfjsModule.default ?? pdfjsModule
+const pdfjsLib = pdfjsModule?.default ?? pdfjsModule
 
 // Disable the worker thread on the server side (no pdf.worker file)
 if (pdfjsLib.GlobalWorkerOptions) {
