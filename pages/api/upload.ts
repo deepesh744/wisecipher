@@ -7,13 +7,9 @@ import { supabase } from '../../lib/supabase'
 import { generateKey, encryptText } from '../../lib/encryption'
 import { extractTextFromDocx } from '../../lib/textExtractors'
 
-const pdfjsModule = require('pdfjs-dist/legacy/build/pdf')
-const pdfjsLib = pdfjsModule?.default ?? pdfjsModule
+const pdfjsModule = require('pdfjs-dist/legacy/build/pdf.node')
 
-// Disable the worker thread on the server side (no pdf.worker file)
-if (pdfjsLib.GlobalWorkerOptions) {
-  pdfjsLib.GlobalWorkerOptions.disableWorker = true
-}
+const pdfjsLib = pdfjsModule?.default ?? pdfjsModule;
 
 export const config = { api: { bodyParser: false } }
 
