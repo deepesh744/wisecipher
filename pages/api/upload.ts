@@ -6,9 +6,11 @@ import fs from 'fs'
 import { supabase } from '../../lib/supabase'
 import { generateKey, encryptText } from '../../lib/encryption'
 import { extractTextFromDocx } from '../../lib/textExtractors'
-//import pdfjsLib from 'pdfjs-dist/legacy/build/pdf'
-// Use require() so Node grabs the .cjs file with getDocument exactly as shipped
 const pdfjsLib = require('pdfjs-dist/legacy/build/pdf')
+
+if (pdfjsLib.GlobalWorkerOptions) {
+  pdfjsLib.GlobalWorkerOptions.disableWorker = true
+}
 
 export const config = { api: { bodyParser: false } }
 
