@@ -67,9 +67,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // 4) Extract text
   const buffer = fs.readFileSync(file.filepath)
+
+  // PDF.js requires a Uint8Array, not a Buffer
+  const uint8Array = new Uint8Array(
+    buffer.buffer,
+    buffer.byteOffset,
+    buffer.byteLength
+  )
+
   let text = ''
   if (file.mimetype === 'application/pdf') {
-    const pdf = await pdfjsLib.getDocument({ data: buffer }).promise
+    const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i)
       const content = await page.getTextContent()
