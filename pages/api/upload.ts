@@ -6,6 +6,7 @@ import fs from 'fs'
 import { supabase } from '../../lib/supabase'
 import { generateKey, encryptText } from '../../lib/encryption'
 import { extractTextFromDocx } from '../../lib/textExtractors'
+//import pdfjsLib from 'pdfjs-dist/legacy/build/pdf'
 import pdfjsLib from 'pdfjs-dist/legacy/build/pdf'
 
 export const config = { api: { bodyParser: false } }
@@ -67,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const buffer = fs.readFileSync(file.filepath)
   let text = ''
   if (file.mimetype === 'application/pdf') {
-    const pdf = await pdfjsLib.getDocument({ data: buffer }).promise
+    const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i)
       const content = await page.getTextContent()
