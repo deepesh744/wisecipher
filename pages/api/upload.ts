@@ -1,7 +1,7 @@
 // pages/api/upload.ts
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createClient } from '@supabase/supabase-js'
-import formidable from 'formidable'
+import { IncomingForm, Fields,File as FormidableFile,Files} from 'formidable'
 import fs from 'fs'
 import { supabase } from '../../lib/supabase'
 import { generateKey, encryptText } from '../../lib/encryption'
@@ -45,10 +45,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   )
 
   // 3) Parse the multipart form
-  const form = new formidable.IncomingForm()
-  let files: formidable.Files
+  const form = new IncomingForm();
+  let files: Files
   try {
-    ({ files } = await new Promise<{ files: formidable.Files }>((resolve, reject) => {
+    ;({ files } = await new Promise<{ files: Files }>((resolve, reject) => {
       form.parse(req, (err, _fields, files) => (err ? reject(err) : resolve({ files })))
     }))
   } catch (err: any) {
