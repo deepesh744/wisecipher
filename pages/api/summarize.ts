@@ -10,27 +10,38 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+/**
+ * Break a long string into chunks up to maxChars, cutting on line boundaries.
+ */
+function splitIntoChunks(str: string, maxChars = 15000): string[] {
+  const chunks: string[] = []
+  let buffer = ''
+  for (const line of str.split('\n')) {
+    if (buffer.length + line.length + 1 > maxChars) {
+      chunks.push(buffer)
+      buffer = line + '\n'
+    } else {
+      buffer += line + '\n'
+    }
+  }
+  if (buffer) chunks.push(buffer)
+  return chunks
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end()
-
   const { docId } = req.body
 
-  // 1) Load encrypted document
+  // 1) Load & decrypt
   const { data, error } = await supabaseAdmin
     .from('documents')
     .select('enc_content, enc_key')
     .eq('id', docId)
     .single()
-
-  if (error || !data) {
-    return res.status(404).json({ error: 'Document not found' })
-  }
-
-  // 2) Decrypt the text
+  if (error || !data) return res.status(404).json({ error: 'Document not found' })
   const text = decryptText(data.enc_content, data.enc_key)
-  console.log('🛠️  Decrypted text (first 500 chars):', text.slice(0, 500))
 
-  // 3) DigiSign‐only guard (unchanged)
+  // 2) DigiSign-only guard
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
   if (lines.length && lines.every(l => l.includes('DigiSign Verified'))) {
     return res.status(400).json({
@@ -39,37 +50,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })
   }
 
-  // === THIS IS THE FIX ===
-  // Instead of passing a combined 'prompt' + text as system & user,
-  // call the helper exactly as: (systemInstructions, userText)
-  const ai = await getOpenAISummary(SUMMARY_PROMPT, text)
-  const content = ai.choices?.[0]?.message?.content?.trim() ?? ''
-  console.log('🛠️  GPT returned:', content.slice(0, 200))
+  // 3) Chunk the text so we stay within the model’s context window
+  const chunks = splitIntoChunks(text)
+  console.log(`🛠️  Split document into ${chunks.length} chunk(s)`)
 
-  // 4) Parse GPT’s JSON output
-  let jsonOut: {
-    'Key Dates': string[]
-    Obligations: string[]
-    'Risks or Liabilities': string[]
+  // 4) Summarize each chunk into JSON and merge
+  const allDates: string[] = []
+  const allObligations: string[] = []
+  const allRisks: string[] = []
+
+  for (let i = 0; i < chunks.length; i++) {
+    console.log(`🛠️  Summarizing chunk ${i+1}/${chunks.length}`)
+    const resp = await getOpenAISummary(SUMMARY_PROMPT, chunks[i])
+    const content = resp.choices?.[0]?.message?.content?.trim() || ''
+    let part: { 'Key Dates': string[]; Obligations: string[]; 'Risks or Liabilities': string[] }
+    try {
+      part = JSON.parse(content)
+    } catch (e) {
+      console.error('❌ Failed to parse chunk JSON:', content)
+      return res.status(500).json({ error: 'Failed to parse summary from AI.' })
+    }
+    allDates.push(...part['Key Dates'])
+    allObligations.push(...part.Obligations)
+    allRisks.push(...part['Risks or Liabilities'])
   }
 
-  try {
-    jsonOut = JSON.parse(content)
-  } catch (e) {
-    console.error('❌ Failed to parse GPT JSON:', content)
-    return res.status(500).json({
-      error:
-        'We got a non-JSON response from the AI. Please try again or upload a shorter document.',
-    })
+  // 5) Build the final merged JSON summary
+  const finalSummary = {
+    'Key Dates': allDates,
+    Obligations: allObligations,
+    'Risks or Liabilities': allRisks,
   }
 
-  // 5) Encrypt & store the final summary
-  const enc_summary = encryptText(JSON.stringify(jsonOut), data.enc_key)
+  // 6) Encrypt & persist
+  const enc_summary = encryptText(JSON.stringify(finalSummary), data.enc_key)
   await supabaseAdmin
     .from('documents')
     .update({ enc_summary })
     .eq('id', docId)
 
-  // 6) Return structured summary
-  return res.status(200).json({ summary: jsonOut })
+  // 7) Return it
+  res.status(200).json({ summary: finalSummary })
 }
