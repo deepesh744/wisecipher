@@ -62,7 +62,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   for (let i = 0; i < chunks.length; i++) {
     console.log(`🛠️  Summarizing chunk ${i+1}/${chunks.length}`)
     const resp = await getOpenAISummary(SUMMARY_PROMPT, chunks[i])
-    const content = resp.choices?.[0]?.message?.content?.trim() || ''
+    let content = resp.choices?.[0]?.message?.content?.trim() || ''
+    // strip markdown fences if GPT added them
+    content = content.replace(/```json/g, '').replace(/```/g, '').trim()
+
     let part: { 'Key Dates': string[]; Obligations: string[]; 'Risks or Liabilities': string[] }
     try {
       part = JSON.parse(content)
