@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { generateKey, encryptText } from '../../lib/encryption'
 import { extractTextFromDocx } from '../../lib/textExtractors'
 import pdfParse from 'pdf-parse'
+import { createWorker } from "tesseract.js";
 
 export const config = { api: { bodyParser: false } }
 
@@ -68,20 +69,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let text = ''
 
   if (file.mimetype === 'application/pdf') {
+    // 1) Try fast text‐layer extraction
     try {
       const data = await pdfParse(buffer)
-      text = data.text
+      text = data.text.trim()
+      console.log('📝 PDF-layer text length:', text.length)
     } catch (e: any) {
-      console.error('❌ PDF parse error', e)
-      return res.status(500).json({ error: 'Failed to parse PDF' })
+      console.warn('⚠️ PDF parse error, will attempt OCR', e)
+      text = ''
+      // return res.status(500).json({ error: 'Failed to parse PDF' })
+    }
+
+    // 2) If that text is too short, fall back to OCR
+    if (text.length < 200) {
+      console.log('⚙️ Falling back to OCR with Tesseract.js');
+    
+      // cast to `any` so TS stops complaining
+      const worker: any = await createWorker();
+    
+      await worker.load();
+      await worker.loadLanguage('eng');
+      await worker.initialize('eng');
+    
+      const { data: { text: ocrText } } = await worker.recognize(buffer);
+      text = ocrText.trim();
+      console.log('📝 OCR text length:', text.length);
+    
+      await worker.terminate();
     }
   } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
     text = await extractTextFromDocx(buffer)
   } else if (file.mimetype === 'text/plain') {
     text = buffer.toString()
+    console.log('📝 TXT text length:', text.length)
   } else {
     console.error('❌ Unsupported file type:', file.mimetype)
     return res.status(400).json({ error: 'Unsupported file type' })
+  }
+
+  // If still no text, bail out early
+  if (!text || text.length < 50) {
+    console.error('❌ No usable text extracted')
+    return res.status(400).json({
+      error:
+        'Could not extract text from this document. Please upload a text-based PDF, DOCX, or a higher-quality scan.',
+    })
   }
 
   console.log('📝 Extracted text length:', text.length)
