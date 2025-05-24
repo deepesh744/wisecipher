@@ -19,10 +19,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const text = decryptText(data.enc_content, data.enc_key);
   console.log('🛠️  Decrypted document text:', text.slice(0, 500));
 
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const isAllDigiSign = lines.length > 0
+    && lines.every(line => line.includes('DigiSign Verified'));
+  if (isAllDigiSign) {
+    return res.status(400).json({
+      error:
+        'It looks like you uploaded a DigiSign audit certificate, not the actual contract. Please upload the full contract PDF so we can summarize it.',
+    });
+  }
+
   const prompt = `${SUMMARY_PROMPT}\n\n${text}`;
   console.log('🛠️  Prompt to OpenAI:', prompt.slice(0, 500));
 
-  const openaiRes = await getOpenAISummary(SUMMARY_PROMPT, text);
+  const openaiRes = await getOpenAISummary(prompt, text);
 
   const summary = openaiRes.choices?.[0]?.message?.content || 'No summary';
 
