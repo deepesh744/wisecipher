@@ -1,35 +1,43 @@
-import Layout from '../components/Layout';
-import UploadDropzone from '../components/UploadDropzone';
-import DocumentCard from '../components/DocumentCard';
-import LoadingSpinner from '../components/LoadingSpinner';
-import { supabase } from '../lib/supabase';
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+// pages/dashboard.tsx
+import Layout from '../components/Layout'
+import UploadDropzone from '../components/UploadDropzone'
+import DocumentCard from '../components/DocumentCard'
+import LoadingSpinner from '../components/LoadingSpinner'
+import { supabase } from '../lib/supabase'
+import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
+
+/** Must match the shape returned from our JSON‐structured summary API */
+type Summary = {
+  'Key Dates': string[]
+  Obligations: string[]
+  'Risks or Liabilities': string[]
+}
 
 type Document = {
-  id: string;
-  filename: string;
-  created_at: string;
-  summary?: string;
-};
+  id: string
+  filename: string
+  created_at: string
+  summary?: Summary
+}
 
 export default function Dashboard() {
-  const [docs, setDocs] = useState<Document[]>([]);
-  const [user, setUser] = useState<any>(null);
-  const [uploading, setUploading] = useState(false);
-  const router = useRouter();
+  const [docs, setDocs] = useState<Document[]>([])
+  const [user, setUser] = useState<any>(null)
+  const [uploading, setUploading] = useState(false)
+  const router = useRouter()
 
   // On mount: verify session and load documents
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session?.user) {
-        router.replace('/login');
+        router.replace('/login')
       } else {
-        setUser(session.user);
-        fetchDocs(session.user.id);
+        setUser(session.user)
+        fetchDocs(session.user.id)
       }
-    });
-  }, [router]);
+    })
+  }, [router])
 
   // Fetch documents for this user
   async function fetchDocs(userId: string) {
@@ -37,56 +45,56 @@ export default function Dashboard() {
       .from('documents')
       .select('id, filename, created_at, enc_summary')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching documents:', error);
-      return;
+      console.error('Error fetching documents:', error)
+      return
     }
 
-    // Decrypt summary on the fly if you want, or pass encrypted up
     setDocs(
       (data || []).map((d: any) => ({
         id: d.id,
         filename: d.filename,
         created_at: d.created_at,
-        summary: d.enc_summary ? '🔒 encrypted summary' : undefined, // placeholder
+        // leaving summary undefined until the user clicks Summarize
+        summary: undefined,
       }))
-    );
+    )
   }
 
   // Handle a new file drop
   async function handleFile(file: File) {
-    setUploading(true);
-  
-    const { data: { session } } = await supabase.auth.getSession()
+    setUploading(true)
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
     if (!session) {
-      console.error('No active session—redirecting to login');
-      router.replace('/login');
-      return;
+      console.error('No active session—redirecting to login')
+      router.replace('/login')
+      return
     }
-  
-    // 2) build the FormData
-    const formData = new FormData();
-    formData.append('file', file);
-  
+
+    const formData = new FormData()
+    formData.append('file', file)
+
     const res = await fetch('/api/upload', {
       method: 'POST',
       body: formData,
       headers: {
         Authorization: `Bearer ${session.access_token}`,
       },
-    });
-  
+    })
+
     if (!res.ok) {
-      console.error('Upload failed:', await res.text());
+      console.error('Upload failed:', await res.text())
     } else {
-      // 4) on success, re-fetch the docs so we see it immediately
-      await fetchDocs(session.user.id);
+      await fetchDocs(session.user.id)
     }
-  
-    setUploading(false);
-  }  
+
+    setUploading(false)
+  }
 
   // Delete a document
   async function handleDelete(id: string) {
@@ -94,8 +102,8 @@ export default function Dashboard() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
-    });
-    fetchDocs(user.id);
+    })
+    fetchDocs(user.id)
   }
 
   // Summarize on demand
@@ -104,16 +112,10 @@ export default function Dashboard() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ docId: id }),
-    });
-    const { summary } = await res.json();
-    // Update local state so the card shows the new summary
-    setDocs(docs.map(d => (d.id === id ? { ...d, summary } : d)));
-  }
-
-  // Chat placeholder
-  function handleChat(id: string) {
-    // e.g. open a modal or expand a <Chatbot docId={id}/>
-    console.log('Chat with', id);
+    })
+    const { summary } = await res.json()
+    // Replace the matching doc's summary with our structured Summary object
+    setDocs(docs.map(d => (d.id === id ? { ...d, summary } : d)))
   }
 
   return (
@@ -134,11 +136,10 @@ export default function Dashboard() {
         <DocumentCard
           key={doc.id}
           doc={doc}
-          onDelete={() => handleDelete(doc.id)}
           onSummarize={() => handleSummarize(doc.id)}
-          onChat={() => handleChat(doc.id)}
+          onDelete={() => handleDelete(doc.id)}
         />
       ))}
     </Layout>
-  );
+  )
 }

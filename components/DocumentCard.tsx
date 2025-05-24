@@ -1,27 +1,62 @@
-import DeleteButton from './DeleteButton';
+// components/DocumentCard.tsx
+import React from 'react'
+import DeleteButton from './DeleteButton'
+
+type Summary = {
+  'Key Dates': string[]
+  Obligations: string[]
+  'Risks or Liabilities': string[]
+}
 
 type Props = {
-  doc: any;
-  onDelete: () => void;
-  onSummarize: () => void;
-  onChat: () => void;
-};
+  doc: {
+    id: string
+    filename: string
+    created_at: string
+    summary?: Summary
+  }
+  onSummarize: () => void
+  onDelete: () => void
+}
 
-export default function DocumentCard({ doc, onDelete, onSummarize, onChat }: Props) {
+export default function DocumentCard({ doc, onSummarize, onDelete }: Props) {
   return (
-    <div className="rounded-xl shadow p-4 bg-white my-4">
-      <div className="font-semibold">{doc.filename}</div>
-      <div className="text-xs text-gray-400 mb-2">Uploaded {new Date(doc.created_at).toLocaleString()}</div>
-      <div className="flex space-x-2">
-        <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={onSummarize}>Summarize</button>
-        <button className="bg-gray-600 text-white px-3 py-1 rounded" onClick={onChat}>Chat</button>
+    <div className="p-4 border rounded mb-4 bg-white">
+      <h2 className="font-semibold">{doc.filename}</h2>
+      <div className="text-xs text-gray-500 mb-2">
+        Uploaded {new Date(doc.created_at).toLocaleString()}
+      </div>
+
+      {doc.summary ? (
+        // summary exists, render the three sections
+        <div className="mt-2 space-y-4">
+          {(['Key Dates', 'Obligations', 'Risks or Liabilities'] as const).map(
+            (section) => (
+              <div key={section}>
+                <h3 className="font-bold">{section}</h3>
+                <ul className="list-disc list-inside ml-4">
+                  {doc.summary![section].map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )
+          )}
+        </div>
+      ) : (
+        // no summary yet, show Summarize button
+        <button
+          onClick={onSummarize}
+          className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
+        >
+          Summarize
+        </button>
+      )}
+
+      <div className="mt-2 flex space-x-2">
+        {/* if you no longer need Chat, just keep Delete */}
         <DeleteButton onClick={onDelete} />
       </div>
-      {doc.summary && (
-        <div className="mt-2 bg-gray-100 rounded p-2 text-sm">
-          <strong>Summary:</strong> {doc.summary}
-        </div>
-      )}
     </div>
-  );
+  )
 }
