@@ -17,9 +17,10 @@ type Props = {
   }
   onSummarize: () => void
   onDelete: () => void
+  isSummarizing?: boolean
 }
 
-export default function DocumentCard({ doc, onSummarize, onDelete }: Props) {
+export default function DocumentCard({ doc, onSummarize, onDelete, isSummarizing = false }: Props) {
   return (
     <div className="p-4 border rounded mb-4 bg-white">
       <h2 className="font-semibold">{doc.filename}</h2>
@@ -43,7 +44,11 @@ export default function DocumentCard({ doc, onSummarize, onDelete }: Props) {
             )
           )}
         </div>
-      ) : (
+      ) : isSummarizing ? (
+        <div className="mt-2 italic text-gray-600">
+          🤖 Our models are processing the best summary for you…
+        </div>
+        ) : (
         // no summary yet, show Summarize button
         <button
           onClick={onSummarize}

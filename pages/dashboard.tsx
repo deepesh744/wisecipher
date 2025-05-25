@@ -22,9 +22,10 @@ type Document = {
 }
 
 export default function Dashboard() {
-  const [docs, setDocs] = useState<Document[]>([])
+  const [docs, setDocs] = useState<Document[]>([]);
   const [user, setUser] = useState<any>(null)
   const [uploading, setUploading] = useState(false)
+  const [summarizingId, setSummarizingId] = useState<string | null>(null);
   const router = useRouter()
 
   // On mount: verify session and load documents
@@ -108,6 +109,7 @@ export default function Dashboard() {
 
   // Summarize on demand
   async function handleSummarize(id: string) {
+    setSummarizingId(id);
     const res = await fetch('/api/summarize', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -116,6 +118,7 @@ export default function Dashboard() {
     const { summary } = await res.json()
     // Replace the matching doc's summary with our structured Summary object
     setDocs(docs.map(d => (d.id === id ? { ...d, summary } : d)))
+    setSummarizingId(null);
   }
 
   return (
@@ -136,6 +139,7 @@ export default function Dashboard() {
         <DocumentCard
           key={doc.id}
           doc={doc}
+          isSummarizing={summarizingId === doc.id}
           onSummarize={() => handleSummarize(doc.id)}
           onDelete={() => handleDelete(doc.id)}
         />
