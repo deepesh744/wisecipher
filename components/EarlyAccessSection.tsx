@@ -3,47 +3,68 @@ import { useState } from 'react'
 
 export default function EarlyAccessSection() {
   const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<'idle'|'sending'|'success'|'error'>('idle')
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [errorMsg, setErrorMsg] = useState('')
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setStatus('sending')
-    const res = await fetch('/api/request-access', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    })
-    if (res.ok) setStatus('success')
-    else setStatus('error')
+    setStatus('loading')
+    setErrorMsg('')
+
+    try {
+      const res = await fetch('/api/early-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to join waitlist')
+      }
+      setStatus('success')
+      setEmail('')
+    } catch (err: any) {
+      setErrorMsg(err.message)
+      setStatus('error')
+    }
   }
 
   return (
-    <section id="early-access" className="py-16 bg-gray-100">
-      <div className="max-w-xl mx-auto px-4 text-center">
-        <h2 className="text-3xl font-bold mb-4">Join Our Waitlist</h2>
-        <p className="mb-6 text-gray-700">
-          Be first in line for full-stack AI decoding, semantic search, question-answering
-          and actionable workflows. We’ll ping you the instant your enterprise sandbox is ready.
+    <section id="early-access" className="py-16 bg-white">
+      <div className="max-w-lg mx-auto px-6 text-center">
+        <h2 className="text-3xl font-bold mb-4">Join Our Early Access Waitlist</h2>
+        <p className="text-gray-600 mb-6">
+          Enter your email below and we’ll let you know as soon as WiseCipher goes live.
         </p>
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4">
           <input
             type="email"
             required
-            placeholder="you@company.com"
-            className="flex-1 px-4 py-3 rounded-lg border border-gray-300"
+            className="flex-1 px-4 py-2 border rounded"
+            placeholder="you@example.com"
             value={email}
             onChange={e => setEmail(e.target.value)}
+            disabled={status === 'loading' || status === 'success'}
           />
           <button
             type="submit"
-            disabled={status==='sending'}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg"
+            disabled={status === 'loading' || status === 'success'}
+            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
           >
-            {status==='sending' ? 'Joining…' : status==='success' ? 'You’re in!' : 'Join Waitlist'}
+            {status === 'loading'
+              ? 'Joining…'
+              : status === 'success'
+              ? '🎉 Joined!'
+              : 'Join Waitlist'}
           </button>
         </form>
-        {status==='error' && (
-          <p className="mt-4 text-red-600">Oops, something went wrong. Try again?</p>
+        {status === 'error' && (
+          <p className="mt-3 text-red-600">{errorMsg}</p>
+        )}
+        {status === 'success' && (
+          <p className="mt-3 text-green-600">
+            Thanks! You’re on the list. We’ll be in touch soon.
+          </p>
         )}
       </div>
     </section>

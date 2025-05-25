@@ -1,6 +1,7 @@
 // components/HeroBanner.tsx
 import { FC } from 'react'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 
 export const HeroBanner: FC = () => {
   const scrollToEarly = () => {
@@ -25,12 +26,14 @@ export const HeroBanner: FC = () => {
           convert dense legal, financial, medical & technical docs into
           actionable insights—in milliseconds.
         </p>
-        <button
-          onClick={scrollToEarly}
-          className="inline-block bg-green-500 hover:bg-green-600 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition"
-        >
-          Request Early Access
-        </button>
+        <Link href="/#early-access" passHref>
+          <motion.a
+            className="inline-block px-8 py-3 bg-white text-blue-600 font-semibold rounded shadow hover:bg-gray-100"
+            whileHover={{ scale: 1.05 }}
+          >
+            Request Early Access
+          </motion.a>
+        </Link>
       </motion.div>
       {/* subtle animated background shapes */}
       <motion.div
