@@ -37,7 +37,7 @@ export const HeroBanner: FC = () => {
       </motion.div>
       {/* subtle animated background shapes */}
       <motion.div
-        className="absolute inset-0 bg-[url('/shapes.svg')] bg-no-repeat bg-center mix-blend-overlay opacity-30"
+        className="absolute inset-0 bg-[url('/shapes.svg')] bg-no-repeat bg-center mix-blend-overlay opacity-30 pointer-events-none"
         animate={{ scale: [1, 1.05, 1] }}
         transition={{ duration: 20, repeat: Infinity }}
       />
