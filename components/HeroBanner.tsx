@@ -1,42 +1,45 @@
+// components/HeroBanner.tsx
+import { FC } from 'react'
 import { motion } from 'framer-motion'
 
-export default function HeroBanner() {
+export const HeroBanner: FC = () => {
+  const scrollToEarly = () => {
+    document
+      .getElementById('early-access')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
-    <section className="relative bg-gradient-to-r from-blue-50 to-white overflow-hidden">
-      <div className="container mx-auto flex flex-col-reverse md:flex-row items-center px-6 py-20">
-        <motion.div
-          className="md:w-1/2"
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8 }}
+    <section className="relative overflow-hidden bg-gradient-to-r from-indigo-900 to-blue-800 text-white">
+      <motion.div
+        className="max-w-4xl mx-auto py-32 px-4 text-center"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-4">
+          WiseCipher: AI-Powered Semantic Decoder
+        </h1>
+        <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8">
+          Leverage transformer-based neural networks and contextual embeddings to
+          convert dense legal, financial, medical & technical docs into
+          actionable insights—in milliseconds.
+        </p>
+        <button
+          onClick={scrollToEarly}
+          className="inline-block bg-green-500 hover:bg-green-600 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition"
         >
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            AI-powered Jargon Decoder
-          </h1>
-          <p className="text-lg text-gray-700 mb-6">
-            Instantly turn complex legal, financial, medical & technical documents into actionable insights—no expertise required.
-          </p>
-          <a
-            id="early-access"
-            href="#early-access"
-            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Request Early Access
-          </a>
-        </motion.div>
-        <motion.div
-          className="md:w-1/2 mb-10 md:mb-0"
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <img
-            src="/placeholder-hero.gif"
-            alt="Product demo animation"
-            className="w-full rounded-lg shadow-lg"
-          />
-        </motion.div>
-      </div>
+          Request Early Access
+        </button>
+      </motion.div>
+      {/* subtle animated background shapes */}
+      <motion.div
+        className="absolute inset-0 bg-[url('/shapes.svg')] bg-no-repeat bg-center mix-blend-overlay opacity-30"
+        animate={{ scale: [1, 1.05, 1] }}
+        transition={{ duration: 20, repeat: Infinity }}
+      />
     </section>
   )
 }
+
+export default HeroBanner
